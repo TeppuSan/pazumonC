@@ -60,13 +60,18 @@ typedef struct
     int atk;         // 攻撃力
     int def;         // 防御力
 } Monster;
+// 敵用
 Monster s = {"スライム", 100, 100, WATER, 10, 5};
 Monster g = {"ゴブリン", 200, 200, EARTH, 20, 15};
 Monster o = {"オオコウモリ", 300, 300, WIND, 30, 25};
 Monster w = {"ウェアウルフ", 400, 400, WIND, 40, 30};
 Monster d = {"ドラゴン", 800, 800, FIRE, 50, 40};
 
-// printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
+// 味方用
+Monster suzaku = {"朱雀", 150, 150, FIRE, 25, 10};
+Monster seiryuu = {"青龍", 150, 150, WIND, 15, 10};
+Monster byakko = {"白虎", 150, 150, EARTH, 20, 5};
+Monster genbu = {"玄武", 150, 150, WATER, 20, 15};
 
 // Dungeon構造体
 typedef struct
@@ -74,6 +79,33 @@ typedef struct
     Monster *mos; // モンスター構造体のポインタ
     int size;     // モンスター構造体の数
 } Dungeon;
+
+// Party構造体
+typedef struct
+{
+    Monster *par; // モンスター構造体のポインタ
+    int MAXhp;    // 最大HP
+    int hp;       // HP
+    int def;      // 防御力
+    int size;     // モンスター構造体の数
+} Party;
+
+// printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
+
+// party pのポイントを取得して
+void oeganizeParty(Party *p)
+{
+    int partyhp = 0;
+    int partydef = 0;
+    for (int i = 0; i < p->size; i++)
+    {
+        partyhp += p->par[i].hp;   // partyhpにp.par[i].hpにてHPを追加している
+        partydef += p->par[i].def; // partydefにp.par[i].defにてDEFを追加している
+    }
+    partydef = partydef / p->size; // partydefの値を平均値にしている
+    p->hp = partyhp;               // p.hpにhpの値を入れている
+    p->def = partydef;             // p.defにdefの値を入れている
+}
 
 // モンスターの名前に記号と色を付ける関数
 const char *PrintMonsterName(const Monster *mos)
@@ -86,32 +118,60 @@ const char *PrintMonsterName(const Monster *mos)
     return colorName; // colorNameの値を返す
 }
 
+void showParty(const Party *p)
+{
+    printf("<パーティ編成>----------\n");
+    for (int i = 0; i < p->size; i++)
+    {
+        const char *name = PrintMonsterName(&p->par[i]);
+        printf("%s HP=%d 攻撃=%d 防御=%d\n",
+               name, p->par[i].hp, p->par[i].atk, p->par[i].def);
+        /* code */
+    }
+    printf("--------------------\n");
+}
+
 // バトルの処理の関数
-void doBattle(const Monster *mos)
+void doBattle(const Monster *mos, Party *p, const char *PlayName)
 {
     const char *name = PrintMonsterName(mos);
 
     printf("%sが現れた!\n", name);
+    if (p->hp <= 0)
+        return;
     printf("%sを倒した!\n", name);
+    printf("%sはさらに奥に進んだ・・・\n", PlayName);
+    printf("====================\n");
+    return;
 }
 
 // ダンジョン関連の関数
-void goDungeon(const Dungeon *h, const char *name)
+int goDungeon(const Dungeon *h, const char *name, Party *p)
 {
-    printf("%sはダンジョンに到着した\n", name);
+    int b = 0;
+    printf("%sのパーティはダンジョンに到着した\n", name);
 
-    for (int b = 0; b < h->size; b++)
+    showParty(p);
+
+    for (b = 0; b < h->size; b++)
     {
-        doBattle(&h->mos[b]);
+        doBattle(&h->mos[b], p, name);
+        if (p->hp <= 0)
+        {
+            printf("%sはダンジョンから逃げ出した・・・\n", name);
+            return b;
+        }
     }
     printf("%sはダンジョンを制覇した\n", name);
-    return;
+    return b;
 }
 
 // args引数の数
 // argvが配列
 int main(int argc, char **argv)
 {
+    int wincount = 0;
+
     // Dungeon構造体のhを設定
     Dungeon h;
     // hの大きさの設定
@@ -131,6 +191,24 @@ int main(int argc, char **argv)
     h.mos[3] = w;
     h.mos[4] = d;
 
+    // Party構造体のpを設定
+    Party p;
+    // pの大きさの設定
+    p.size = 4;
+    // pのメモリの大きさの設定
+    p.par = malloc(sizeof(Monster) * p.size);
+    if (p.par == NULL)
+    {
+        printf("メモリ失敗");
+        return -1;
+        /* code */
+    }
+    // 配列格納
+    p.par[0] = suzaku;
+    p.par[1] = seiryuu;
+    p.par[2] = byakko;
+    p.par[3] = genbu;
+
     // printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
 
     // int i = 0;
@@ -145,11 +223,17 @@ int main(int argc, char **argv)
     printf("*** Puzzle & Monsters ***\n");
     // 1から始める理由は./a.outが引数として認識されるため
 
-    goDungeon(&h, argv[1]);
+    oeganizeParty(&p);
 
-    printf("*** GAME CLEARED ***\n");
-    printf("倒したモンスター数=%d\n", h.size);
+    wincount = goDungeon(&h, argv[1], &p);
+
+    if (p.hp <= 0)
+        printf("*** GAME OVER ***\n");
+    else
+        printf("*** GAME CLEARED ***\n");
+    printf("倒したモンスター数=%d\n", wincount);
     // メモリの開放
+    free(p.par);
     free(h.mos);
 
     return 0;
