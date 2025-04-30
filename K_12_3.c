@@ -120,7 +120,7 @@ const char *PrintMonsterName(const Monster *mos)
 
 void showParty(const Party *p)
 {
-    printf("<パーティ編成>----------\n");
+    printf("<パーティ編成>(HP=%d)----------\n", p->hp);
     for (int i = 0; i < p->size; i++)
     {
         const char *name = PrintMonsterName(&p->par[i]);
@@ -137,6 +137,7 @@ void doBattle(const Monster *mos, Party *p, const char *PlayName)
     const char *name = PrintMonsterName(mos);
 
     printf("%sが現れた!\n", name);
+    p->hp -= 300;
     if (p->hp <= 0)
         return;
     printf("%sを倒した!\n", name);
