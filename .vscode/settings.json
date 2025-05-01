@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "r_8_2": "c"
     }
 }

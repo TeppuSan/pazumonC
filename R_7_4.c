@@ -46,13 +46,13 @@ int main()
                 scanf("%s", set);
                 input[i] = atoi(set);
                 in = 0;
+                if (input[i] > 9 || input[i] < 0)
+                {
+                    in = 1;
+                    printf("0~9の数字を入れてください\n");
+                }
                 for (int n = 0; n < i; n++)
-                    if (input[i] > 9 || input[i] < 0)
-                    {
-                        in = 1;
-                        printf("0~9の数字を入れてください\n");
-                    }
-                    else if (input[n] == input[i])
+                    if (input[n] == input[i])
                     {
                         in = 1;
                         printf("同じ数字は使えません\n");
