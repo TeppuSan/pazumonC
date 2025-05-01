@@ -42,6 +42,7 @@ int main()
         {
             do
             {
+                printf("%d桁目の数字を入力してください\n", i + 1);
                 scanf("%s", set);
                 input[i] = atoi(set);
                 in = 0;
