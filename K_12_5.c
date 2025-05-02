@@ -42,7 +42,7 @@ const char *getElement_Symbol(Element e)
 {
     const char *symbols[] = {
         "$", // FIRE
-        "-", // WATER
+        "~", // WATER
         "@", // WIND
         "#", // EARTH
         "&", // LIFE
@@ -121,20 +121,23 @@ typedef struct
 
 // printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
 
-// void printGem(MAX_GEMS GEM)
-// {
-//     int color = getElement_color(GEM); // モンスターの属性を参照してカラーコードを取得
-//     const char *symbol = getElement_Symbol(GEM);
-//     printf("\x1b[4%dm%s\x1b[49m", color, symbol);
-// }
+void printGem(BattleField *BF, int i)
+{
+    int color = getElement_color(BF->gems[i]);
+    const char *symbol = getElement_Symbol(BF->gems[i]);
+    printf("\x1b[4%dm%s\x1b[49m ", color, symbol);
+}
 
 void printGems(BattleField *BF)
 {
     for (int i = 0; i < N + 1; i++)
     {
-        int color = getElement_color(BF->gems[i]); // モンスターの属性を参照してカラーコードを取得
-        const char *symbol = getElement_Symbol(BF->gems[i]);
-        printf("\x1b[4%dm%s\x1b[49m", color, symbol);
+        printf("%c ", (char)(i + 65));
+    }
+    printf("\n");
+    for (int i = 0; i < N + 1; i++)
+    {
+        printGem(BF, i);
     }
 }
 
@@ -144,8 +147,6 @@ void fillGems(BattleField *BF)
     {
         BF->gems[i] = rand() % EMPTY;
     }
-    printGems(BF);
-    printf("\n");
 }
 
 // party pのポイントを取得して
@@ -188,6 +189,8 @@ void showBattleField(BattleField *BF)
     }
     printf("\n    HP=%d/%d    \n", BF->player->hp, BF->player->MAXhp);
     printf("--------------------\n");
+    printGems(BF);
+    printf("\n--------------------\n");
 }
 
 void showParty(const Party *p)
@@ -223,8 +226,8 @@ void onEnemyTurn(BattleField *BF)
 void onAttack(BattleField *BF)
 {
 
-    printf("【%s】の攻撃で400のダメージを与えた\n", BF->player->player);
-    BF->Enemy->hp -= 400;
+    printf("【%s】の攻撃で200のダメージを与えた\n", BF->player->player);
+    BF->Enemy->hp -= 200;
     return;
 }
 // playerのターンの処理
