@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 typedef char String[1024];
 
@@ -15,6 +16,25 @@ typedef enum
     LIFE,  // 4
     EMPTY  // 5
 } Element;
+
+// MAX_GEMS
+typedef enum
+{
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N
+} MAX_GEMS;
 
 // ElementSymbol
 // Elementの値によってシンボルを返す
@@ -84,13 +104,49 @@ typedef struct
 typedef struct
 {
     Monster *par; // モンスター構造体のポインタ
+    char *player; // playerネームの格納
     int MAXhp;    // 最大HP
     int hp;       // HP
     int def;      // 防御力
     int size;     // モンスター構造体の数
 } Party;
 
+// BattleField構造体
+typedef struct
+{
+    Party *player;
+    Monster *Enemy;
+    MAX_GEMS *gems;
+} BattleField;
+
 // printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
+
+// void printGem(MAX_GEMS GEM)
+// {
+//     int color = getElement_color(GEM); // モンスターの属性を参照してカラーコードを取得
+//     const char *symbol = getElement_Symbol(GEM);
+//     printf("\x1b[4%dm%s\x1b[49m", color, symbol);
+// }
+
+void printGems(BattleField *BF)
+{
+    for (int i = 0; i < N + 1; i++)
+    {
+        int color = getElement_color(BF->gems[i]); // モンスターの属性を参照してカラーコードを取得
+        const char *symbol = getElement_Symbol(BF->gems[i]);
+        printf("\x1b[4%dm%s\x1b[49m", color, symbol);
+    }
+}
+
+void fillGems(BattleField *BF)
+{
+    for (int i = 0; i < N + 1; i++)
+    {
+        BF->gems[i] = rand() % EMPTY;
+    }
+    printGems(BF);
+    printf("\n");
+}
 
 // party pのポイントを取得して
 void oeganizeParty(Party *p)
@@ -103,6 +159,7 @@ void oeganizeParty(Party *p)
         partydef += p->par[i].def; // partydefにp.par[i].defにてDEFを追加している
     }
     partydef = partydef / p->size; // partydefの値を平均値にしている
+    p->MAXhp = partyhp;            // p.MAXhpにhpの値を入れている
     p->hp = partyhp;               // p.hpにhpの値を入れている
     p->def = partydef;             // p.defにdefの値を入れている
 }
@@ -116,6 +173,21 @@ const char *PrintMonsterName(const Monster *mos)
     // colorNameにsizeof(colorName)で大きさ指定し、""の中身を入れる
     snprintf(colorName, sizeof(colorName), "\x1b[3%dm%s%s%s\x1b[39m", color, symbol, mos->name, symbol);
     return colorName; // colorNameの値を返す
+}
+
+void showBattleField(BattleField *BF)
+{
+    printf("--------------------\n");
+    printf("     %s     \n", PrintMonsterName(BF->Enemy));
+    printf("    HP=%d/%d    \n", BF->Enemy->hp, BF->Enemy->MAXhp);
+    for (int i = 0; i < BF->player->size; i++)
+    {
+        const char *plname = PrintMonsterName(&BF->player->par[i]);
+        printf(" %s ", plname);
+        /* code */
+    }
+    printf("\n    HP=%d/%d    \n", BF->player->hp, BF->player->MAXhp);
+    printf("--------------------\n");
 }
 
 void showParty(const Party *p)
@@ -132,77 +204,86 @@ void showParty(const Party *p)
 }
 
 // 敵側の攻撃の処理
-void onEnemyAttack(Monster *mos, Party *p, const char *PlayName, const char *name)
+void onEnemyAttack(BattleField *BF)
 {
-    printf("【%s】の攻撃で80のダメージを受けた\n", name);
-    p->hp -= 80;
+    printf("【%s】の攻撃で80のダメージを受けた\n", PrintMonsterName(BF->Enemy));
+    BF->player->hp -= 80;
     return;
 }
 
 // 敵側のターンの処理
-void onEnemyTurn(Monster *mos, Party *p, const char *PlayName, const char *name)
+void onEnemyTurn(BattleField *BF)
 {
-    printf("【%s】のターン\n", name);
-    onEnemyAttack(mos, p, PlayName, name);
+    printf("【%s】のターン\n", PrintMonsterName(BF->Enemy));
+    onEnemyAttack(BF);
     return;
 }
 
 // player側の攻撃処理
-void onAttack(Monster *mos, Party *p, const char *PlayName)
+void onAttack(BattleField *BF)
 {
 
-    printf("【%s】の攻撃で200のダメージを与えた\n", PlayName);
-    mos->hp -= 200;
+    printf("【%s】の攻撃で400のダメージを与えた\n", BF->player->player);
+    BF->Enemy->hp -= 400;
     return;
 }
 // playerのターンの処理
-void onPlayerTurn(Monster *mos, Party *p, const char *PlayName)
+void onPlayerTurn(BattleField *BF)
 {
-    printf("【%s】のターン\n", PlayName);
-    onAttack(mos, p, PlayName);
+    printf("【%s】のターン\n", BF->player->player);
+    showBattleField(BF);
+    onAttack(BF);
 
     return;
 }
 
 // バトルの処理の関数
-void doBattle(Monster *mos, Party *p, const char *PlayName)
+void doBattle(Monster *mos, Party *p)
 {
-    const char *name = PrintMonsterName(mos);
+    printf("%sが現れた!\n",
+           PrintMonsterName(mos));
 
-    printf("%sが現れた!\n", name);
-    while (mos->hp >= 0)
+    BattleField BF = {
+        p,
+        mos,
+    };
+    BF.gems = malloc(sizeof(MAX_GEMS) * N);
+    fillGems(&BF);
+
+    while (BF.Enemy->hp > 0)
     {
-        onPlayerTurn(mos, p, PlayName);
-        if (mos->hp <= 0)
-            printf("%sを倒した!\n", name);
+        onPlayerTurn(&BF);
+        if (BF.Enemy->hp <= 0)
+            printf("%sを倒した!\n", PrintMonsterName(mos));
         else
-            onEnemyTurn(mos, p, PlayName, name);
-        if (p->hp <= 0)
+            onEnemyTurn(&BF);
+        if (BF.player->hp <= 0)
             return;
     }
-    printf("%sはさらに奥に進んだ・・・\n", PlayName);
+    printf("%sはさらに奥に進んだ・・・\n", BF.player->player);
     printf("====================\n");
+    free(BF.gems);
     return;
 }
 
 // ダンジョン関連の関数
-int goDungeon(const Dungeon *h, const char *name, Party *p)
+int goDungeon(const Dungeon *h, Party *p)
 {
     int b = 0;
-    printf("%sのパーティはダンジョンに到着した\n", name);
+    printf("%sのパーティはダンジョンに到着した\n", p->player);
 
     showParty(p);
 
     for (b = 0; b < h->size; b++)
     {
-        doBattle(&h->mos[b], p, name);
+        doBattle(&h->mos[b], p);
         if (p->hp <= 0)
         {
-            printf("%sはダンジョンから逃げ出した・・・\n", name);
+            printf("%sはダンジョンから逃げ出した・・・\n", p->player);
             return b;
         }
     }
-    printf("%sはダンジョンを制覇した\n", name);
+    printf("%sはダンジョンを制覇した\n", p->player);
     return b;
 }
 
@@ -210,6 +291,7 @@ int goDungeon(const Dungeon *h, const char *name, Party *p)
 // argvが配列
 int main(int argc, char **argv)
 {
+    srand((unsigned)time(NULL));
     int wincount = 0;
 
     // Dungeon構造体のhを設定
@@ -248,6 +330,8 @@ int main(int argc, char **argv)
     p.par[1] = seiryuu;
     p.par[2] = byakko;
     p.par[3] = genbu;
+    // PlayName
+    p.player = argv[1];
 
     // printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
 
@@ -265,7 +349,7 @@ int main(int argc, char **argv)
 
     oeganizeParty(&p);
 
-    wincount = goDungeon(&h, argv[1], &p);
+    wincount = goDungeon(&h, &p);
 
     if (p.hp <= 0)
         printf("*** GAME OVER ***\n");
