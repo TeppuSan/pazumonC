@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "typeinfo": "c",
-        "r_8_2": "c"
+        "r_8_2": "c",
+        "stdlib.h": "c"
     }
 }
