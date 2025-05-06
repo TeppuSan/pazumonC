@@ -128,21 +128,18 @@ void printGem(BattleField *BF, int i)
     const char *symbol = getElement_Symbol(BF->gems[i]);
     printf("\x1b[4%dm%s\x1b[49m ", color, symbol);
 }
+// gemの情報を表示する巻数
 
 void printGems(BattleField *BF)
 {
     for (int i = 0; i < N + 1; i++)
-    {
         printf("%c ", (char)(i + 65));
-    }
     printf("\n");
     for (int i = 0; i < N + 1; i++)
-    {
         printGem(BF, i);
-    }
     printf("\n");
 }
-
+// gemの情報を格納する関数
 void fillGems(BattleField *BF)
 {
     for (int i = 0; i < N + 1; i++)
@@ -150,37 +147,48 @@ void fillGems(BattleField *BF)
         BF->gems[i] = rand() % EMPTY;
     }
 }
+// gemの移動をする関数
 void swapGem(BattleField *BF, int cmd1)
 {
-    // printf("%d", BF->gems[cmd1 - 66]);
     int dmc = cmd1 - 65;
     int swap = BF->gems[dmc];
-    // printf("%d", BF->gems[cmd1 - 65]);
     BF->gems[dmc] = BF->gems[dmc + 1];
     BF->gems[dmc + 1] = swap;
 }
 
-void moveGems(char playcommand1, char playcommand2, BattleField *BF)
+// gemの移動やgemの移動を表示する関数
+void moveGems(int cmd1, char cmd2, BattleField *BF)
 {
-    int cmd1 = (int)playcommand1;
-    int cmd2 = (int)playcommand2;
     for (int b = 0; b < N + 1; b++)
         printGem(BF, b);
     printf("\n");
-    for (int i = cmd1; i < cmd2; i++)
+    if (cmd1 < cmd2)
     {
-        swapGem(BF, i);
-        for (int b = 0; b < N + 1; b++)
-            printGem(BF, b);
-        printf("\n");
+        for (int i = cmd1; i < cmd2; i++)
+        {
+            swapGem(BF, i);
+            for (int b = 0; b < N + 1; b++)
+                printGem(BF, b);
+            printf("\n");
+        }
     }
-    for (int i = cmd1 - 1; i > cmd2; i--)
+    else
     {
-        swapGem(BF, i);
-        for (int b = 0; b < N + 1; b++)
-            printGem(BF, b);
-        printf("\n");
+        for (int i = cmd1 - 1; i > cmd2 - 1; i--)
+        {
+            swapGem(BF, i);
+            for (int b = 0; b < N + 1; b++)
+                printGem(BF, b);
+            printf("\n");
+        }
     }
+}
+//
+void evaluateGem(char playcommand1, char playcommand2, BattleField *BF)
+{
+    int cmd1 = (int)playcommand1;
+    int cmd2 = (int)playcommand2;
+    moveGems(cmd1, cmd2, BF);
 }
 
 // party pのポイントを取得して
@@ -209,31 +217,18 @@ const char *PrintMonsterName(const Monster *mos)
     snprintf(colorName, sizeof(colorName), "\x1b[3%dm%s%s%s\x1b[39m", color, symbol, mos->name, symbol);
     return colorName; // colorNameの値を返す
 }
-
+// 入れられた文字が正しいか判定する巻数
 bool chechValidCommand(char playcommand1, char playcommand2, char playcommand3)
 {
-    int check = 0;
-
+    int check = 0; // check判定の初期値
     // 各文字がA〜Nか判定
-    if ((playcommand1 >= 'A' && playcommand1 <= 'N') &&
-        (playcommand2 >= 'A' && playcommand2 <= 'N'))
-    {
-        printf("有効なコマンドです: %c%c\n", playcommand1, playcommand2);
-    }
-    else
-    {
-        printf("無効なコマンドです: %c%c\n", playcommand1, playcommand2);
+    if (playcommand1 == playcommand2 || playcommand3 != '\n' ||
+        (playcommand1 < 'A' || playcommand1 > 'N') ||
+        (playcommand2 < 'A' || playcommand2 > 'N'))
         check = 1;
-    }
-    if (playcommand3 != '\n')
-    {
-        printf("無効なコマンドです: %c\n", playcommand3);
-        check = 1;
-    }
-
     return check;
 }
-
+// バトルフィールドの情報を表示する巻数
 void showBattleField(BattleField *BF)
 {
     printf("--------------------\n");
@@ -243,14 +238,13 @@ void showBattleField(BattleField *BF)
     {
         const char *plname = PrintMonsterName(&BF->player->par[i]);
         printf(" %s ", plname);
-        /* code */
     }
     printf("\n    HP=%d/%d    \n", BF->player->hp, BF->player->MAXhp);
     printf("--------------------\n");
     printGems(BF);
     printf("\n--------------------\n");
 }
-
+// パーティの詳細情報を表示する巻数
 void showParty(const Party *p)
 {
     printf("<パーティ編成>(HP=%d)----------\n", p->hp);
@@ -259,7 +253,6 @@ void showParty(const Party *p)
         const char *name = PrintMonsterName(&p->par[i]);
         printf("%s HP=%d 攻撃=%d 防御=%d\n",
                name, p->par[i].hp, p->par[i].atk, p->par[i].def);
-        /* code */
     }
     printf("--------------------\n");
 }
@@ -283,7 +276,6 @@ void onEnemyTurn(BattleField *BF)
 // player側の攻撃処理
 void onAttack(BattleField *BF)
 {
-
     printf("【%s】の攻撃で200のダメージを与えた\n\n", BF->player->player);
     BF->Enemy->hp -= 200;
     return;
@@ -291,22 +283,19 @@ void onAttack(BattleField *BF)
 // playerのターンの処理
 void onPlayerTurn(BattleField *BF)
 {
-    int check;
+    int check; // check判定の受け取り用
     char playcommand1, playcommand2, playcommand3;
     printf("【%s】のターン\n", BF->player->player);
     showBattleField(BF);
     do
     {
         printf("コマンド?>");
+        // 半角スペースを入れている理由は改行で反応させなくするため
         scanf(" %c%c%c", &playcommand1, &playcommand2, &playcommand3);
-
         check = chechValidCommand(playcommand1, playcommand2, playcommand3);
-
     } while (check);
-    moveGems(playcommand1, playcommand2, BF);
-
+    evaluateGem(playcommand1, playcommand2, BF);
     onAttack(BF);
-
     return;
 }
 
@@ -315,14 +304,12 @@ void doBattle(Monster *mos, Party *p)
 {
     printf("%sが現れた!\n",
            PrintMonsterName(mos));
-
     BattleField BF = {
         p,
         mos,
     };
     BF.gems = malloc(sizeof(MAX_GEMS) * N);
     fillGems(&BF);
-
     while (BF.Enemy->hp > 0)
     {
         onPlayerTurn(&BF);
@@ -344,9 +331,7 @@ int goDungeon(const Dungeon *h, Party *p)
 {
     int b = 0;
     printf("%sのパーティはダンジョンに到着した\n", p->player);
-
     showParty(p);
-
     for (b = 0; b < h->size; b++)
     {
         doBattle(&h->mos[b], p);
@@ -366,7 +351,6 @@ int main(int argc, char **argv)
 {
     srand((unsigned)time(NULL));
     int wincount = 0;
-
     // Dungeon構造体のhを設定
     Dungeon h;
     // hの大きさの設定
@@ -385,7 +369,6 @@ int main(int argc, char **argv)
     h.mos[2] = o;
     h.mos[3] = w;
     h.mos[4] = d;
-
     // Party構造体のpを設定
     Party p;
     // pの大きさの設定
@@ -405,13 +388,6 @@ int main(int argc, char **argv)
     p.par[3] = genbu;
     // PlayName
     p.player = argv[1];
-
-    // printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
-
-    // int i = 0;
-    // printf("\x1b[34mエレメントシンボル%s\x1b[39m", getElement_Symbol(WATER));
-    // printf("エレメントカラーナンバー%d", getElement_color(WATER));
-
     if (argc == 1) // 引数が1である場合のエラー処理
     {
         printf("エラー:プレイヤー名を指定して起動してください\n");
@@ -419,11 +395,8 @@ int main(int argc, char **argv)
     }
     printf("*** Puzzle & Monsters ***\n");
     // 1から始める理由は./a.outが引数として認識されるため
-
     oeganizeParty(&p);
-
     wincount = goDungeon(&h, &p);
-
     if (p.hp <= 0)
         printf("*** GAME OVER ***\n");
     else
@@ -432,6 +405,5 @@ int main(int argc, char **argv)
     // メモリの開放
     free(p.par);
     free(h.mos);
-
     return 0;
 }
