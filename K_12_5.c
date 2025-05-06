@@ -180,7 +180,7 @@ void showBattleField(BattleField *BF)
 {
     printf("--------------------\n");
     printf("     %s     \n", PrintMonsterName(BF->Enemy));
-    printf("    HP=%d/%d    \n", BF->Enemy->hp, BF->Enemy->MAXhp);
+    printf("    HP=%d/%d    \n\n\n", BF->Enemy->hp, BF->Enemy->MAXhp);
     for (int i = 0; i < BF->player->size; i++)
     {
         const char *plname = PrintMonsterName(&BF->player->par[i]);
@@ -209,7 +209,7 @@ void showParty(const Party *p)
 // 敵側の攻撃の処理
 void onEnemyAttack(BattleField *BF)
 {
-    printf("【%s】の攻撃で80のダメージを受けた\n", PrintMonsterName(BF->Enemy));
+    printf("【%s】の攻撃で80のダメージを受けた\n\n", PrintMonsterName(BF->Enemy));
     BF->player->hp -= 80;
     return;
 }
@@ -226,7 +226,7 @@ void onEnemyTurn(BattleField *BF)
 void onAttack(BattleField *BF)
 {
 
-    printf("【%s】の攻撃で200のダメージを与えた\n", BF->player->player);
+    printf("【%s】の攻撃で200のダメージを与えた\n\n", BF->player->player);
     BF->Enemy->hp -= 200;
     return;
 }
