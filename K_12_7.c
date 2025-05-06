@@ -120,6 +120,15 @@ typedef struct
     MAX_GEMS *gems;
 } BattleField;
 
+// BanishInfo
+typedef struct
+{
+    Element ele;
+    int start;
+    int count;
+    /* data */
+} BanishInfo;
+
 // printf("モンスターネーム%s\nMAXhp%d\nhp%d\n属性%d\natk%d\ndef%d\n", s.name, s.MAXhp, s.hp, s.element, s.atk, s.def);
 
 void printGem(BattleField *BF, int i)
@@ -184,11 +193,39 @@ void moveGems(int cmd1, char cmd2, BattleField *BF)
     }
 }
 //
+void checkBanishable(BattleField *BF, BanishInfo *bani)
+{
+    for (int i = 1; i < N + 1; i++)
+    {
+
+        if (BF->gems[i - 1] == BF->gems[i])
+        {
+            bani->count++;
+        }
+        else if (bani->count >= 3)
+        {
+            return;
+        }
+        else
+        {
+            bani->start = i - 1;
+            bani->count = 1;
+        }
+    }
+}
+
+// gemの消滅や移動を狩りする関数
 void evaluateGem(char playcommand1, char playcommand2, BattleField *BF)
 {
+    BanishInfo bani = {EMPTY, 0, 0};
     int cmd1 = (int)playcommand1;
     int cmd2 = (int)playcommand2;
     moveGems(cmd1, cmd2, BF);
+    checkBanishable(BF, &bani);
+    banishGems();
+    shiftGems();
+    spawnGems();
+    countGem();
 }
 
 // party pのポイントを取得して
@@ -217,8 +254,9 @@ const char *PrintMonsterName(const Monster *mos)
     snprintf(colorName, sizeof(colorName), "\x1b[3%dm%s%s%s\x1b[39m", color, symbol, mos->name, symbol);
     return colorName; // colorNameの値を返す
 }
+
 // 入れられた文字が正しいか判定する巻数
-bool chechValidCommand(char playcommand1, char playcommand2, char playcommand3)
+bool checkValidCommand(char playcommand1, char playcommand2, char playcommand3)
 {
     int check = 0; // check判定の初期値
     // 各文字がA〜Nか判定
@@ -292,7 +330,7 @@ void onPlayerTurn(BattleField *BF)
         printf("コマンド?>");
         // 半角スペースを入れている理由は改行で反応させなくするため
         scanf(" %c%c%c", &playcommand1, &playcommand2, &playcommand3);
-        check = chechValidCommand(playcommand1, playcommand2, playcommand3);
+        check = checkValidCommand(playcommand1, playcommand2, playcommand3);
     } while (check);
     evaluateGem(playcommand1, playcommand2, BF);
     onAttack(BF);
@@ -361,6 +399,7 @@ int main(int argc, char **argv)
     {
         printf("メモリ失敗");
         return -1;
+        /* code */
     }
     // 配列格納
     h.mos[0] = s;
@@ -378,6 +417,7 @@ int main(int argc, char **argv)
     {
         printf("メモリ失敗");
         return -1;
+        /* code */
     }
     // 配列格納
     p.par[0] = suzaku;
