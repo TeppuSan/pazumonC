@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 typedef char String[1024];
@@ -141,17 +140,14 @@ void printGem(BattleField *BF, int i)
 
 void printGems(BattleField *BF)
 {
-    for (int i = 0; i < N + 1; i++)
-        printf("%c ", (char)(i + 65));
-    printf("\n");
-    for (int i = 0; i < N + 1; i++)
+    for (int i = 0; i <= N; i++)
         printGem(BF, i);
     printf("\n");
 }
 // gemの情報を格納する関数
 void fillGems(BattleField *BF)
 {
-    for (int i = 0; i < N + 1; i++)
+    for (int i = 0; i <= N; i++)
     {
         BF->gems[i] = rand() % EMPTY;
     }
@@ -163,21 +159,43 @@ void swapGem(BattleField *BF, int cmd1)
     int swap = BF->gems[dmc];
     BF->gems[dmc] = BF->gems[dmc + 1];
     BF->gems[dmc + 1] = swap;
+    printGems(BF);
 }
 
 // gemの移動やgemの移動を表示する関数
-void moveGems(int cmd1, char cmd2, BattleField *BF)
+void moveGems(int cmd1, int cmd2, BattleField *BF, BanishInfo *bani)
 {
-    for (int b = 0; b < N + 1; b++)
-        printGem(BF, b);
+    printGems(BF);
     printf("\n");
-    if (cmd1 < cmd2)
+    printf("cmd1:%dcmd2:%d\n", cmd1, cmd2);
+    if (bani->count != 0)
+    {
+        for (int i = cmd1 - 1; i > cmd2 - 1; i--)
+        {
+            for (int b = 0; b < N - bani->start - 1; b++)
+            {
+                printf("b:%dcmd2:%d\n", b, N - bani->start);
+                swapGem(BF, i + b);
+                printf("\n");
+            }
+        }
+        //     int base = cmd1 - 65; // 空白ができる左端位置（0-indexed）
+
+        //     for (int step = 0; step < bani->count; step++)
+        //     {
+        //         // 1ステップだけ右から左へ全体をずらす
+        //         for (int i = N - 2; i >= base; i--)
+        //         {
+        //             swapGem(BF, i + 65); // i は0-indexなので、cmd文字に直す(+65)
+        //         }
+        //         printf("\n");
+        //     }
+    }
+    else if (cmd1 < cmd2)
     {
         for (int i = cmd1; i < cmd2; i++)
         {
             swapGem(BF, i);
-            for (int b = 0; b < N + 1; b++)
-                printGem(BF, b);
             printf("\n");
         }
     }
@@ -186,30 +204,103 @@ void moveGems(int cmd1, char cmd2, BattleField *BF)
         for (int i = cmd1 - 1; i > cmd2 - 1; i--)
         {
             swapGem(BF, i);
-            for (int b = 0; b < N + 1; b++)
-                printGem(BF, b);
             printf("\n");
         }
     }
 }
+
+void spawnGems(BattleField *BF, BanishInfo *bani)
+{
+    for (int i = 0; i <= N; i++)
+    {
+        if (BF->gems[i] == EMPTY)
+            BF->gems[i] = rand() % EMPTY;
+    }
+    printGems(BF);
+}
+
+void shiftGems(BattleField *BF, BanishInfo *bani)
+{
+    for (int t = -1; t < bani->count - 1; t++)
+    {
+        printf("ここ\n");
+        moveGems(bani->start + 66 - t, bani->start + 65 - t, BF, bani);
+    }
+    printf("ここまで\n");
+
+    printGems(BF);
+}
+void banishGems(BattleField *BF, BanishInfo *bani)
+{
+    for (int i = 0; i < bani->count; i++)
+    {
+        BF->gems[i + bani->start - 1] = 5;
+        if (bani->start == 0)
+            BF->gems[bani->count - 1] = 5;
+    }
+}
+
+void countGem(BattleField *BF)
+{
+    int FI = 0;
+    int WA = 0;
+    int WI = 0;
+    int EA = 0;
+    int LI = 0;
+    int EM = 0;
+    for (int i = 0; i < N + 1; i++)
+    {
+        switch (BF->gems[i])
+        {
+        case FIRE:
+            FI++;
+            break;
+        case WATER:
+            WA++;
+            break;
+        case WIND:
+            WI++;
+            break;
+        case EARTH:
+            EA++;
+            break;
+        case LIFE:
+            LI++;
+            break;
+        case EMPTY:
+            EM++;
+            break;
+
+        default:
+            break;
+        }
+    }
+    printf("火%d,水%d,風%d,土%d,命%d,無%d", FI, WA, WI, EA, LI, EM);
+}
 //
 void checkBanishable(BattleField *BF, BanishInfo *bani)
 {
+    int start = 0;
     for (int i = 1; i < N + 1; i++)
     {
 
         if (BF->gems[i - 1] == BF->gems[i])
         {
-            bani->count++;
+            bani->ele = BF->gems[i];
+            if (bani->count == 0)
+            {
+                bani->count = 2;
+                bani->start = i;
+            }
+            else
+                bani->count++;
         }
         else if (bani->count >= 3)
-        {
             return;
-        }
         else
         {
-            bani->start = i - 1;
-            bani->count = 1;
+            bani->start = start;
+            bani->count = 0;
         }
     }
 }
@@ -220,12 +311,13 @@ void evaluateGem(char playcommand1, char playcommand2, BattleField *BF)
     BanishInfo bani = {EMPTY, 0, 0};
     int cmd1 = (int)playcommand1;
     int cmd2 = (int)playcommand2;
-    moveGems(cmd1, cmd2, BF);
+    moveGems(cmd1, cmd2, BF, &bani);
     checkBanishable(BF, &bani);
-    banishGems();
-    shiftGems();
-    spawnGems();
-    countGem();
+    printf("Gem%d,start%d,length%d\n", bani.ele, bani.start, bani.count);
+    banishGems(BF, &bani);
+    shiftGems(BF, &bani);
+    spawnGems(BF, &bani);
+    countGem(BF);
 }
 
 // party pのポイントを取得して
@@ -279,6 +371,9 @@ void showBattleField(BattleField *BF)
     }
     printf("\n    HP=%d/%d    \n", BF->player->hp, BF->player->MAXhp);
     printf("--------------------\n");
+    for (int i = 0; i < N + 1; i++)
+        printf("%c ", (char)(i + 65));
+    printf("\n");
     printGems(BF);
     printf("\n--------------------\n");
 }
@@ -346,7 +441,7 @@ void doBattle(Monster *mos, Party *p)
         p,
         mos,
     };
-    BF.gems = malloc(sizeof(MAX_GEMS) * N);
+    BF.gems = malloc(sizeof(Element) * (N + 1));
     fillGems(&BF);
     while (BF.Enemy->hp > 0)
     {
