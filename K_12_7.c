@@ -155,62 +155,86 @@ void fillGems(BattleField *BF)
 // gemの移動をする関数
 void swapGem(BattleField *BF, int cmd1)
 {
-    int dmc = cmd1 - 65;
-    int swap = BF->gems[dmc];
-    BF->gems[dmc] = BF->gems[dmc + 1];
-    BF->gems[dmc + 1] = swap;
-    printGems(BF);
+    int dmc = cmd1 - 65;               // 配列指定用
+    int swap = BF->gems[dmc];          // 指定した配列の値をいれる
+    BF->gems[dmc] = BF->gems[dmc + 1]; // 指定された配列より右の値を取得して指定した配列に入れる
+    BF->gems[dmc + 1] = swap;          // 右の値に指定した配列の値を入れている
+    // printGems(BF);
 }
 
 // gemの移動やgemの移動を表示する関数
 void moveGems(int cmd1, int cmd2, BattleField *BF, BanishInfo *bani)
 {
-    printGems(BF);
-    printf("\n");
-    printf("cmd1:%dcmd2:%d\n", cmd1, cmd2);
-    if (bani->count != 0)
-    {
-        for (int i = cmd1 - 1; i > cmd2 - 1; i--)
-        {
-            for (int b = 0; b < N - bani->start - 1; b++)
-            {
-                printf("b:%dcmd2:%d\n", b, N - bani->start);
-                swapGem(BF, i + b);
-                printf("\n");
-            }
-        }
-        //     int base = cmd1 - 65; // 空白ができる左端位置（0-indexed）
-
-        //     for (int step = 0; step < bani->count; step++)
-        //     {
-        //         // 1ステップだけ右から左へ全体をずらす
-        //         for (int i = N - 2; i >= base; i--)
-        //         {
-        //             swapGem(BF, i + 65); // i は0-indexなので、cmd文字に直す(+65)
-        //         }
-        //         printf("\n");
-        //     }
-    }
-    else if (cmd1 < cmd2)
+    // printGems(BF);
+    // printf("cmd1:%dcmd2:%d\n", cmd1, cmd2);
+    if (cmd1 < cmd2)
     {
         for (int i = cmd1; i < cmd2; i++)
         {
             swapGem(BF, i);
             printf("\n");
+            if (bani->count == 0)
+            {
+                printGems(BF);
+                printf("\n");
+            }
         }
     }
     else
     {
         for (int i = cmd1 - 1; i > cmd2 - 1; i--)
         {
-            swapGem(BF, i);
-            printf("\n");
+            // printf("I:%d\n", i);
+            if (i < 78)
+            {
+                swapGem(BF, i);
+                if (bani->count == 0)
+                {
+                    printGems(BF);
+                    printf("\n");
+                }
+            }
         }
     }
 }
+// 空白がある場合の左側への移動処理
+void shiftGems(BattleField *BF, BanishInfo *bani)
+{
+    // for (int t = -1; t < bani->count - 1; t++)
+    // {
+    //     printf("ここ\n");
+    //     moveGems(bani->start + 66 - t, bani->start + 65 - t, BF, bani);
+    // }
+    // printf("ここ\n");
+    printGems(BF);
 
+    for (int i = bani->count; i > 0; i--)
+    {
+        for (int n = bani->start - 1; n < N; n++)
+        {
+            moveGems(n + 65 + i, n + 64 + i, BF, bani);
+        }
+        printf("\n");
+        printGems(BF);
+    }
+
+    // printf("ここまで\n");
+
+    /*  GPTのコード
+    for (int i = 1; i <= N; i++)
+    {
+        int j = i;
+        while (j > 0 && BF->gems[j - 1] == EMPTY && BF->gems[j] != EMPTY)
+        {
+            swapGem(BF, j - 1 + 65);
+            j--;
+        }
+    }*/
+}
+// 空白がある場所へのランダムgem生成
 void spawnGems(BattleField *BF, BanishInfo *bani)
 {
+    printf("\n");
     for (int i = 0; i <= N; i++)
     {
         if (BF->gems[i] == EMPTY)
@@ -218,25 +242,20 @@ void spawnGems(BattleField *BF, BanishInfo *bani)
     }
     printGems(BF);
 }
-
-void shiftGems(BattleField *BF, BanishInfo *bani)
-{
-    for (int t = -1; t < bani->count - 1; t++)
-    {
-        printf("ここ\n");
-        moveGems(bani->start + 66 - t, bani->start + 65 - t, BF, bani);
-    }
-    printf("ここまで\n");
-
-    printGems(BF);
-}
 void banishGems(BattleField *BF, BanishInfo *bani)
 {
+    printGems(BF);
     for (int i = 0; i < bani->count; i++)
     {
         BF->gems[i + bani->start - 1] = 5;
         if (bani->start == 0)
             BF->gems[bani->count - 1] = 5;
+    }
+    if (bani->count != 0)
+    {
+        printGems(BF);
+        BF->Enemy->hp -= 9999;
+        printf("9999ダメージを与えた\n");
     }
 }
 
@@ -275,7 +294,7 @@ void countGem(BattleField *BF)
             break;
         }
     }
-    printf("火%d,水%d,風%d,土%d,命%d,無%d", FI, WA, WI, EA, LI, EM);
+    printf("火%d,水%d,風%d,土%d,命%d,無%d\n", FI, WA, WI, EA, LI, EM);
 }
 //
 void checkBanishable(BattleField *BF, BanishInfo *bani)
