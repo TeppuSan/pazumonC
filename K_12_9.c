@@ -148,12 +148,21 @@ const char *PrintMonsterName(const Monster *mos)
     return colorName; // colorNameの値を返す
 }
 
+const char *printcomb(int comb)
+{
+    static char combinfo[1024];
+    snprintf(combinfo, sizeof(combinfo), "     \x1b[47m %d COMBO!\x1b[49m\n\n", comb);
+    return combinfo;
+}
+
 // ここからダメージ処理
 
 // comb補正用の関数
 double combculc(BanishInfo *bani, int comb)
 {
-    double culc = 1.5 ^ (bani->count - 3 + comb);
+    double combcont = (double)(bani->count - 3 + comb);
+    double combmulti = pow(1.5, combcont);
+    return combmulti;
 }
 
 // ダメージの+=10%のブレを出す関数
@@ -167,7 +176,7 @@ double blurDamege(double Damege)
 // 回復地の計算
 int calcRecoverDamage(BattleField *BF, BanishInfo *bani, int comb)
 {
-    double calcRec = 20 * 1.5;
+    double calcRec = 20 * combculc(bani, comb);
     calcRec = blurDamege(calcRec);
     return (int)calcRec;
 }
@@ -183,7 +192,10 @@ void doRecover(BattleField *BF, BanishInfo *bani, int comb)
         heal = BF->player->MAXhp - nowhp;
         BF->player->hp = BF->player->MAXhp;
     }
-    printf("%d回復した\n", heal);
+    if (comb == 1)
+        printf("%d回復した\n", heal);
+    else
+        printf("%d回復した%s\n", heal, printcomb(comb));
 }
 // 敵側の攻撃計算
 int calcEnemyAttack(BattleField *BF)
@@ -208,7 +220,7 @@ void onEnemyAttack(BattleField *BF)
 int calcAttack(BattleField *BF, BanishInfo *bani, int i, int comb)
 {
     double dame = 0;
-    dame = (BF->player->par[i].atk - BF->Enemy->def) * ELEMENT_BOOST[BF->player->par[i].element][BF->Enemy->element];
+    dame = (BF->player->par[i].atk - BF->Enemy->def) * ELEMENT_BOOST[BF->player->par[i].element][BF->Enemy->element] * combculc(bani, comb);
     dame = blurDamege(dame);
     return (int)dame;
 }
@@ -229,7 +241,7 @@ void onAttack(BattleField *BF, BanishInfo *bani, int comb)
             if (comb == 1)
                 printf("【%s】の攻撃で%dのダメージを与えた\n\n", PrintMonsterName(&BF->player->par[i]), dame);
             else
-                printf("【%s】の攻撃で%dのダメージを与えた \x1b[47m %d COMBO!\x1b[49m\n\n", PrintMonsterName(&BF->player->par[i]), dame, comb);
+                printf("【%s】の攻撃で%dのダメージを与えた %s\n\n", PrintMonsterName(&BF->player->par[i]), dame, printcomb(comb));
         }
     }
     return;
@@ -337,16 +349,15 @@ void spawnGems(BattleField *BF, BanishInfo *bani)
 // 3つ以上並んでいる場合、空その並んでいる箇所を空白にする処理
 void banishGems(BattleField *BF, BanishInfo *bani, int comb)
 {
-    printGems(BF);
-    for (int i = 0; i < bani->count; i++)
-    {
-        BF->gems[i + bani->start - 1] = 5;
-        if (bani->start == 0)
-            BF->gems[bani->count - 1] = 5;
-    }
-    if (bani->count != 0)
+    if (bani->count >= 3)
     {
         printGems(BF);
+        for (int i = 0; i < bani->count; i++)
+        {
+            BF->gems[i + bani->start - 1] = 5;
+            if (bani->start == 0)
+                BF->gems[bani->count - 1] = 5;
+        }
         if (bani->ele <= EARTH)
         {
             onAttack(BF, bani, comb);
@@ -419,7 +430,6 @@ void checkBanishable(BattleField *BF, BanishInfo *bani)
             }
             else if (bani->count >= 3)
             {
-                printf("length%d\n", bani->count);
                 return;
             }
             else
@@ -429,6 +439,10 @@ void checkBanishable(BattleField *BF, BanishInfo *bani)
             }
             /* code */
         }
+    }
+    if (bani->count == 2)
+    {
+        bani->count = 0;
     }
 }
 
@@ -445,22 +459,19 @@ void evaluateGem(char playcommand1, char playcommand2, BattleField *BF)
         bani.count = 0;
         bani.ele = EMPTY;
         checkBanishable(BF, &bani);
-        printf("Gem%d,start%d,length%d\n", bani.ele, bani.start, bani.count);
+
         if (bani.count > 0)
         {
             comb++;
-            printf("Gem%d,start%d,length%d\n", bani.ele, bani.start, bani.count);
 
             banishGems(BF, &bani, comb);
             shiftGems(BF, &bani);
-            /* code */
-            /* code */
         }
 
     } while (bani.count > 0);
 
     spawnGems(BF, &bani);
-    countGem(BF);
+    // countGem(BF);
 }
 
 // party情報
