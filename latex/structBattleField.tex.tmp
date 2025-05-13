@@ -1,0 +1,28 @@
+\doxysection{Battle\+Field Struct Reference}
+\hypertarget{structBattleField}{}\label{structBattleField}\index{BattleField@{BattleField}}
+
+
+Collaboration diagram for Battle\+Field\+:
+% FIG 0
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structBattleField_acbac4f37fcafbf8b3ebeedf7f2ff4205}\label{structBattleField_acbac4f37fcafbf8b3ebeedf7f2ff4205} 
+\mbox{\hyperlink{structParty}{Party}} \texorpdfstring{$\ast$}{*} {\bfseries player}
+\item 
+\Hypertarget{structBattleField_ab820ddd9afdfb6223d6ec983cf386b4d}\label{structBattleField_ab820ddd9afdfb6223d6ec983cf386b4d} 
+\mbox{\hyperlink{structMonster}{Monster}} \texorpdfstring{$\ast$}{*} {\bfseries Enemy}
+\item 
+\Hypertarget{structBattleField_ac12460a3cdddfd045c26eb5ce3d63a04}\label{structBattleField_ac12460a3cdddfd045c26eb5ce3d63a04} 
+MAX\+\_\+\+GEMS \texorpdfstring{$\ast$}{*} {\bfseries gems}
+\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+K\+\_\+12\+\_\+10.\+c\item 
+K\+\_\+12\+\_\+5.\+c\item 
+K\+\_\+12\+\_\+6.\+c\item 
+K\+\_\+12\+\_\+7.\+c\item 
+K\+\_\+12\+\_\+8.\+c\item 
+K\+\_\+12\+\_\+9.\+c\end{DoxyCompactItemize}

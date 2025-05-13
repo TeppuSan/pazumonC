@@ -1,7 +1,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include "R_13_3.h"
-
+/**
+ @brief createRand
+ @param[int]max 乱数の範囲を決める
+ @return int 乱数の値を返す
+ @details 乱数の範囲を受け取りその中の乱数値を返す
+*/
 int createRand(int max)
 {
     srand((unsigned)time(NULL));
